@@ -1,0 +1,10 @@
+com\mycompany\maven\mvc\project\dao\AccountDAO.class
+com\mycompany\maven\mvc\project\dao\DishDAO.class
+com\mycompany\maven\mvc\project\JakartaRestConfiguration.class
+com\mycompany\maven\mvc\project\controller\RegisterServlet.class
+com\mycompany\maven\mvc\project\resources\JakartaEE11Resource.class
+com\mycompany\maven\mvc\project\controller\LoginServlet.class
+com\mycompany\maven\mvc\project\controller\LogoutServlet.class
+com\mycompany\maven\mvc\project\controller\MenuServlet.class
+com\mycompany\maven\mvc\project\model\Dish.class
+com\mycompany\maven\mvc\project\model\Account.class

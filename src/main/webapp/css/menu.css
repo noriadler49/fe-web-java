@@ -1,0 +1,36 @@
+body {
+    padding-top: 50px;
+    background-color: #f8f9fa;
+}
+
+.btn-danger, .btn-outline-danger {
+    margin: 0 5px;
+}
+
+.back-home {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.dish-card img {
+    height: 250px;
+    object-fit: cover;
+}
+
+.category-bar, .search-bar {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.category-bar a {
+    margin: 0 8px;
+}
+
+.search-bar input {
+    width: 250px;
+}
+
+.card-title {
+    font-weight: bold;
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/beans_4_0.xsd"
+       bean-discovery-mode="all">
+</beans>
+<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+    <property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+    <property name="url" value="jdbc:sqlserver://localhost:1433;databaseName=dtb_lastTermPrj;encrypt=true;trustServerCertificate=true" />
+    <property name="username" value="norial" />
+    <property name="password" value="Alice30th@111205" />
+</bean>
