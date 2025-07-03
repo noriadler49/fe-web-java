@@ -107,6 +107,8 @@
     </style>
 </head>
 <body>
+    <p>DEBUG: Context path = <%= contextPath %></p>
+
 <div class="container">
     <h2 class="mb-4">Your Cart</h2>
 
@@ -125,7 +127,8 @@
             <tr>
                 <td>${item.dish.dishName}</td>
                 <td>
-                    <form action="updateCartQuantity" method="post" class="d-flex align-items-center">
+                   <form action="<%=contextPath%>/cart" method="post" class="d-flex align-items-center">
+                        <input type="hidden" name="action" value="updateQuantity"/>
                         <input type="hidden" name="cartItemId" value="${item.cartItemId}"/>
                         <input type="number" name="quantity" value="${item.quantity}" min="1" class="form-control quantity-input"/>
                         <button type="submit" class="btn btn-sm btn-update">Update</button>
@@ -134,7 +137,8 @@
                 <td>$${item.dish.dishPrice}</td>
                 <td>$<c:out value="${item.quantity * item.dish.dishPrice}" /></td>
                 <td>
-                    <form action="removeCartItem" method="post">
+                    <form action="<%=contextPath%>/cart" method="post">
+                        <input type="hidden" name="action" value="removeItem"/>
                         <input type="hidden" name="cartItemId" value="${item.cartItemId}"/>
                         <button type="submit" class="btn btn-sm btn-remove">Remove</button>
                     </form>
@@ -149,8 +153,8 @@
     </div>
 
     <div class="text-end mt-3">
-        <a class="btn btn-continue" href="${contextPath}/menu?category=All">Continue Shopping</a>
-        <a class="btn btn-checkout" href="${contextPath}/checkout">Checkout</a>
+        <a class="btn btn-continue" href="<%=contextPath%>/menu?category=All">Continue Shopping</a>
+        <a class="btn btn-checkout" href="<%=contextPath%>/checkout">Checkout</a>
     </div>
 </div>
 </body>

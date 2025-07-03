@@ -102,9 +102,12 @@
         <c:choose>
             <c:when test="${sessionScope.role == 'User'}">
                 <form action="<%=contextPath%>/cart" method="post">
-                    <input type="hidden" name="dishId" value="${dish.dishId}" />
+                    <input type="hidden" name="action" value="addToCart"/>
+                    <input type="hidden" name="dishId" value="${item.dishId}" />
+                    <input type="hidden" name="quantity" value="1" />
                     <button type="submit" class="btn btn-success">Add to Cart</button>
                 </form>
+
             </c:when>
 
             <c:when test="${sessionScope.role == 'Staff'}">

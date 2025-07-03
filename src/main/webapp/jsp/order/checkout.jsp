@@ -12,7 +12,7 @@
 <body>
 <div class="container mt-4">
     <h2>Checkout</h2>
-    <form action="${contextPath}/checkout" method="post">
+    <form action="<%=contextPath%>/checkout" method="post">
         <div class="mb-3">
             <label>Name</label>
             <input type="text" name="name" required class="form-control"/>
@@ -38,7 +38,7 @@
         </div>
 
         <button type="submit" class="btn btn-success">Place Order</button>
-        <a class="btn btn-secondary" href="${contextPath}/cart">Back to Cart</a>
+        <a class="btn btn-secondary" href="<%=contextPath%>/cart">Back to Cart</a>
     </form>
 </div>
 </body>

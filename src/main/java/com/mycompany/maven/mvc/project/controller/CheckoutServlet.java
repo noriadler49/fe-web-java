@@ -56,8 +56,10 @@ public class CheckoutServlet extends HttpServlet {
         double total = cartItems.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
 
         // Tính lại nếu có mã giảm giá
-        if (voucherCode != null && !voucherCode.isEmpty()) {
-            total *= 0.9; // tạm thời fix 10% giảm
+        if (voucherCode == null || voucherCode.trim().isEmpty()) {
+            stmtOrder.setNull(4, java.sql.Types.VARCHAR);
+        } else {
+            stmtOrder.setString(4, voucherCode);
         }
 
         int orderId = orderDAO.placeOrder(username, cartItems, total, voucherCode, address, payment);

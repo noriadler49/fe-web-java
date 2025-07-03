@@ -97,5 +97,54 @@ public class CartDAO {
             e.printStackTrace();
         }
     }
+    public void updateCartQuantity(String username, int cartItemId, int quantity) {
+    try (Connection conn = DBContext.getConnection()) {
+        // Nếu quantity <= 0 thì xóa
+        if (quantity <= 0) {
+            String deleteSql = """
+                DELETE c FROM tbl_CartItems c
+                JOIN tbl_Accounts a ON c.AccountId = a.AccountId
+                WHERE c.CartItemId = ? AND a.AccountUsername = ?
+            """;
+            try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
+                ps.setInt(1, cartItemId);
+                ps.setString(2, username);
+                ps.executeUpdate();
+            }
+        } else {
+            String updateSql = """
+                UPDATE c SET CartItemQuantity = ?
+                FROM tbl_CartItems c
+                JOIN tbl_Accounts a ON c.AccountId = a.AccountId
+                WHERE c.CartItemId = ? AND a.AccountUsername = ?
+            """;
+            try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                ps.setInt(1, quantity);
+                ps.setInt(2, cartItemId);
+                ps.setString(3, username);
+                ps.executeUpdate();
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+public void removeCartItem(String username, int cartItemId) {
+    try (Connection conn = DBContext.getConnection()) {
+        String sql = """
+            DELETE c FROM tbl_CartItems c
+            JOIN tbl_Accounts a ON c.AccountId = a.AccountId
+            WHERE c.CartItemId = ? AND a.AccountUsername = ?
+        """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, cartItemId);
+            ps.setString(2, username);
+            ps.executeUpdate();
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 
 }

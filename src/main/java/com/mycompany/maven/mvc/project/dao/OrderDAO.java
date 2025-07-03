@@ -50,45 +50,55 @@ public class OrderDAO {
 
         try {
             conn = DBContext.getConnection();
-            conn.setAutoCommit(false); // Transaction start
+            conn.setAutoCommit(false); // Bắt đầu transaction
 
-            // 1. Get AccountId from username
+            // 1. Lấy AccountId
             String getUserSql = "SELECT AccountId FROM tbl_Accounts WHERE AccountUsername = ?";
-            PreparedStatement getUserStmt = conn.prepareStatement(getUserSql);
-            getUserStmt.setString(1, username);
-            ResultSet userRs = getUserStmt.executeQuery();
-            if (!userRs.next()) return -1; // user not found
-            int accountId = userRs.getInt("AccountId");
+            try (PreparedStatement getUserStmt = conn.prepareStatement(getUserSql)) {
+                getUserStmt.setString(1, username);
+                ResultSet userRs = getUserStmt.executeQuery();
+                if (!userRs.next()) return -1;
+                int accountId = userRs.getInt("AccountId");
 
-            // 2. Insert into tbl_Orders and get OrderId
-            String insertOrderSql = "INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderCreatedAt) " +
-                    "OUTPUT INSERTED.OrderId VALUES (?, ?, ?, ?, GETDATE())";
-            stmtOrder = conn.prepareStatement(insertOrderSql);
-            stmtOrder.setDouble(1, total);
-            stmtOrder.setInt(2, accountId);
-            stmtOrder.setString(3, "Pending"); // default status
-            stmtOrder.setString(4, voucherCode);
+                // 2. Insert vào tbl_Orders
+                String insertOrderSql = """
+                    INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderAddress, PaymentMethod, OrderCreatedAt)
+                    OUTPUT INSERTED.OrderId
+                    VALUES (?, ?, ?, ?, ?, ?, GETDATE())
+                """;
 
-            ResultSet rsOrder = stmtOrder.executeQuery();
-            if (rsOrder.next()) {
-                orderId = rsOrder.getInt("OrderId");
+                stmtOrder = conn.prepareStatement(insertOrderSql);
+                stmtOrder.setDouble(1, total);
+                stmtOrder.setInt(2, accountId);
+                stmtOrder.setString(3, "Pending");
+                stmtOrder.setString(4, voucherCode);
+                stmtOrder.setString(5, address);
+                stmtOrder.setString(6, payment);
+
+                ResultSet rsOrder = stmtOrder.executeQuery();
+                if (rsOrder.next()) {
+                    orderId = rsOrder.getInt("OrderId");
+                }
+
+                // 3. Insert từng món vào tbl_OrderItems
+                String insertItemSql = """
+                    INSERT INTO tbl_OrderItems (DishId, OrderItemQuantity, OrderItemPrice, OrderId)
+                    VALUES (?, ?, ?, ?)
+                """;
+                stmtItems = conn.prepareStatement(insertItemSql);
+
+                for (CartItem item : cartItems) {
+                    stmtItems.setInt(1, item.getDishId());
+                    stmtItems.setInt(2, item.getQuantity());
+                    stmtItems.setDouble(3, item.getPrice());
+                    stmtItems.setInt(4, orderId);
+                    stmtItems.addBatch();
+                }
+
+                stmtItems.executeBatch();
+                conn.commit(); // Hoàn tất
+
             }
-
-            // 3. Insert each CartItem into tbl_OrderItems
-            String insertItemSql = "INSERT INTO tbl_OrderItems (DishId, OrderItemQuantity, OrderItemPrice, OrderId) " +
-                    "VALUES (?, ?, ?, ?)";
-            stmtItems = conn.prepareStatement(insertItemSql);
-
-            for (CartItem item : cartItems) {
-                stmtItems.setInt(1, item.getDishId());
-                stmtItems.setInt(2, item.getQuantity());
-                stmtItems.setDouble(3, item.getPrice());
-                stmtItems.setInt(4, orderId);
-                stmtItems.addBatch();
-            }
-            stmtItems.executeBatch();
-
-            conn.commit(); // Transaction commit
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -100,5 +110,62 @@ public class OrderDAO {
         }
 
         return orderId;
+    }
+
+    public Order getOrderByIdAndUsername(int orderId, String username) {
+        Order order = null;
+        try (Connection conn = DBContext.getConnection()) {
+            String sql = """
+                SELECT o.* FROM tbl_Orders o
+                JOIN tbl_Accounts a ON o.AccountId = a.AccountId
+                WHERE o.OrderId = ? AND a.AccountUsername = ?
+            """;
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderId);
+            ps.setString(2, username);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                order = new Order();
+                order.setOrderId(rs.getInt("OrderId"));
+                order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
+                order.setStatus(rs.getString("OrderStatus"));
+                order.setVoucherCode(rs.getString("VoucherCode"));
+                Timestamp created = rs.getTimestamp("OrderCreatedAt");
+                if (created != null) order.setCreatedAt(created.toLocalDateTime());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return order;
+    }
+
+    public List<OrderItem> getOrderItemsByOrderId(int orderId) {
+        List<OrderItem> items = new ArrayList<>();
+        try (Connection conn = DBContext.getConnection()) {
+            String sql = """
+                SELECT oi.*, d.DishName FROM tbl_OrderItems oi
+                JOIN tbl_Dishes d ON oi.DishId = d.DishId
+                WHERE oi.OrderId = ?
+            """;
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                OrderItem item = new OrderItem();
+                item.setOrderItemId(rs.getInt("OrderItemId"));
+                item.setDishId(rs.getInt("DishId"));
+                item.setOrderId(rs.getInt("OrderId"));
+                item.setQuantity(rs.getInt("OrderItemQuantity"));
+                item.setPrice(rs.getDouble("OrderItemPrice"));
+                item.setDishName(rs.getString("DishName")); // lấy từ JOIN
+                items.add(item);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return items;
     }
 }

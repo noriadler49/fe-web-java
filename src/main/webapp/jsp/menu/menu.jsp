@@ -3,6 +3,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
+<%
+    String contextPath = request.getContextPath();
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,7 +57,7 @@
                         <p class="card-text text-success fw-bold">${item.dishPrice} VND</p>
                         <p class="text-muted small">Created: ${item.dishCreatedAt}</p>
 
-                        <a href="${pageContext.request.contextPath}/dishDetails?id=${item.dishId}" class="btn btn-primary">View Dish</a>
+                        <a href="<%=contextPath%>/dishDetails?id=${item.dishId}" class="btn btn-primary">View Dish</a>
 
                         <c:choose>
                             <c:when test="${sessionScope.role == 'Staff'}">
@@ -68,10 +71,13 @@
                             </c:when>
 
                             <c:when test="${sessionScope.role == 'User'}">
-                                <form action="addToCart" method="post" class="mt-2">
-                                    <input type="hidden" name="dishId" value="${item.dishId}">
+                                <form action="<%=contextPath%>/cart" method="post">
+                                    <input type="hidden" name="action" value="addToCart"/>
+                                    <input type="hidden" name="dishId" value="${item.dishId}" />
+                                    <input type="hidden" name="quantity" value="1" />
                                     <button type="submit" class="btn btn-success">Add to Cart</button>
                                 </form>
+
                             </c:when>
                         </c:choose>
                     </div>

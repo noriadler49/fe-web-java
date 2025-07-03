@@ -5,32 +5,32 @@ import com.mycompany.maven.mvc.project.model.CartItem;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/cart")
+@WebServlet(name = "CartServlet", urlPatterns = "/cart")
 public class CartServlet extends HttpServlet {
     private CartDAO cartDAO = new CartDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         String username = (String) request.getSession().getAttribute("username");
+
         if (username == null) {
             response.sendRedirect("jsp/account/login.jsp");
             return;
         }
 
         List<CartItem> cartItems = cartDAO.getCartItemsByUsername(username);
-        double totalPrice = cartItems.stream()
-                .mapToDouble(i -> i.getPrice() * i.getQuantity())
-                .sum();
+        double total = cartItems.stream().mapToDouble(item -> item.getDish().getDishPrice() * item.getQuantity()).sum();
 
         request.setAttribute("cartItems", cartItems);
-        request.setAttribute("totalPrice", totalPrice);
+        request.setAttribute("totalPrice", total);
 
         request.getRequestDispatcher("jsp/order/cart.jsp").forward(request, response);
     }
@@ -38,23 +38,27 @@ public class CartServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String action = request.getParameter("action");
+        String username = (String) request.getSession().getAttribute("username");
 
-        HttpSession session = request.getSession();
-        String username = (String) session.getAttribute("username");
-        String role = (String) session.getAttribute("role");
-
-        if (username == null || !"User".equals(role)) {
+        if (username == null) {
             response.sendRedirect("jsp/account/login.jsp");
             return;
         }
+        
+        if ("updateQuantity".equals(action)) {
+            int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
+            int quantity = Integer.parseInt(request.getParameter("quantity"));
+            cartDAO.updateCartQuantity(username, cartItemId, quantity);
+        } else if ("removeItem".equals(action)) {
+            int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
+            cartDAO.removeCartItem(username, cartItemId);
+        } else if ("addToCart".equals(action)) {
+            int dishId = Integer.parseInt(request.getParameter("dishId"));
+            int quantity = Integer.parseInt(request.getParameter("quantity"));
+            cartDAO.addToCart(username, dishId, quantity);
+        }
 
-        String dishIdStr = request.getParameter("dishId");
-        int dishId = Integer.parseInt(dishIdStr);
-
-        // Thêm vào giỏ hàng (mặc định quantity = 1)
-        cartDAO.addToCart(username, dishId, 1);
-
-        // Sau khi thêm thì redirect về trang menu (hoặc dish details tùy bạn)
-        response.sendRedirect("menu?category=All");
+        response.sendRedirect("cart");
     }
 }
