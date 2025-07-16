@@ -23,23 +23,26 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-    String username = request.getParameter("username");
-    String password = request.getParameter("password");
+            throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
 
-    // Lấy account chi tiết thay vì chỉ checkLogin
-    Account acc = dao.getAccountByUsernameAndPassword(username, password);
+        Account acc = dao.getAccountByUsernameAndPassword(username, password);
 
-    if (acc != null) {
-        request.getSession().setAttribute("username", acc.getAccountUsername());
-        request.getSession().setAttribute("role", acc.getAccountRole()); // set role vào session
-        response.sendRedirect("home");
-    } else {
-        request.setAttribute("error", "Invalid login.");
-        request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+        if (acc != null) {
+            request.getSession().setAttribute("username", acc.getAccountUsername());
+            request.getSession().setAttribute("role", acc.getAccountRole());
+
+            if ("Staff".equalsIgnoreCase(acc.getAccountRole())) {
+                response.sendRedirect("jsp/admin/admin.jsp"); // Redirect admin
+            } else {
+                response.sendRedirect("home"); // Redirect user
+            }
+        } else {
+            request.setAttribute("error", "Invalid login.");
+            request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+        }
     }
-}
 
-    
 }
 

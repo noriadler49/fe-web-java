@@ -51,16 +51,12 @@ public class CheckoutServlet extends HttpServlet {
         String address = request.getParameter("address");
         String payment = request.getParameter("payment");
         String voucherCode = request.getParameter("usedVoucher");
-
+        if (voucherCode != null && voucherCode.trim().isEmpty()) {
+            voucherCode = null;
+        }
         List<CartItem> cartItems = cartDAO.getCartItemsByUsername(username);
         double total = cartItems.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
 
-        // Tính lại nếu có mã giảm giá
-        if (voucherCode == null || voucherCode.trim().isEmpty()) {
-            stmtOrder.setNull(4, java.sql.Types.VARCHAR);
-        } else {
-            stmtOrder.setString(4, voucherCode);
-        }
 
         int orderId = orderDAO.placeOrder(username, cartItems, total, voucherCode, address, payment);
 

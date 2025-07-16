@@ -37,6 +37,8 @@ public class OrderItem {
     public int getOrderId() { return orderId; }
     public void setOrderId(int orderId) { this.orderId = orderId; }
 
+    
     public void setOrderItemPrice(double price) { this.price = price; }
+
     public void setOrderItemQuantity(int quantity) { this.quantity = quantity; }
 }

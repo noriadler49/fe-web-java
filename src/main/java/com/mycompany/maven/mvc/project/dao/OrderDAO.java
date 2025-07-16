@@ -50,9 +50,9 @@ public class OrderDAO {
 
         try {
             conn = DBContext.getConnection();
-            conn.setAutoCommit(false); // Bắt đầu transaction
+            conn.setAutoCommit(false); // Start transaction
 
-            // 1. Lấy AccountId
+            // 1. Get AccountId
             String getUserSql = "SELECT AccountId FROM tbl_Accounts WHERE AccountUsername = ?";
             try (PreparedStatement getUserStmt = conn.prepareStatement(getUserSql)) {
                 getUserStmt.setString(1, username);
@@ -60,7 +60,7 @@ public class OrderDAO {
                 if (!userRs.next()) return -1;
                 int accountId = userRs.getInt("AccountId");
 
-                // 2. Insert vào tbl_Orders
+                // 2. Insert into tbl_Orders
                 String insertOrderSql = """
                     INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderAddress, PaymentMethod, OrderCreatedAt)
                     OUTPUT INSERTED.OrderId
@@ -71,7 +71,14 @@ public class OrderDAO {
                 stmtOrder.setDouble(1, total);
                 stmtOrder.setInt(2, accountId);
                 stmtOrder.setString(3, "Pending");
-                stmtOrder.setString(4, voucherCode);
+
+                // 👇 xử lý voucherCode có thể null
+                if (voucherCode == null || voucherCode.trim().isEmpty()) {
+                    stmtOrder.setNull(4, Types.VARCHAR);
+                } else {
+                    stmtOrder.setString(4, voucherCode);
+                }
+
                 stmtOrder.setString(5, address);
                 stmtOrder.setString(6, payment);
 
@@ -80,7 +87,7 @@ public class OrderDAO {
                     orderId = rsOrder.getInt("OrderId");
                 }
 
-                // 3. Insert từng món vào tbl_OrderItems
+                // 3. Insert order items
                 String insertItemSql = """
                     INSERT INTO tbl_OrderItems (DishId, OrderItemQuantity, OrderItemPrice, OrderId)
                     VALUES (?, ?, ?, ?)
@@ -96,8 +103,7 @@ public class OrderDAO {
                 }
 
                 stmtItems.executeBatch();
-                conn.commit(); // Hoàn tất
-
+                conn.commit(); // Commit transaction
             }
 
         } catch (Exception e) {
@@ -159,7 +165,7 @@ public class OrderDAO {
                 item.setOrderId(rs.getInt("OrderId"));
                 item.setQuantity(rs.getInt("OrderItemQuantity"));
                 item.setPrice(rs.getDouble("OrderItemPrice"));
-                item.setDishName(rs.getString("DishName")); // lấy từ JOIN
+                item.setDishName(rs.getString("DishName"));
                 items.add(item);
             }
 

@@ -1,4 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
 <%
     String contextPath = request.getContextPath();
 %>
@@ -26,13 +28,14 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach var="item" items="${items}">
-            <tr>
-                <td>${item.dishName}</td>
-                <td>${item.quantity}</td>
-                <td>${item.oprice} VND</td>
-            </tr>
-        </c:forEach>
+            <c:forEach var="item" items="${items}">
+                <tr>
+                    <td>${item.dishName}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price} VND</td>
+
+                </tr>
+            </c:forEach>
         </tbody>
     </table>
 
