@@ -47,22 +47,34 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        String name = request.getParameter("name");
         String address = request.getParameter("address");
         String payment = request.getParameter("payment");
         String voucherCode = request.getParameter("usedVoucher");
         if (voucherCode != null && voucherCode.trim().isEmpty()) {
             voucherCode = null;
         }
-        List<CartItem> cartItems = cartDAO.getCartItemsByUsername(username);
-        double total = cartItems.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
 
+        List<CartItem> cartItems = cartDAO.getCartItemsByUsername(username);
+        System.out.println("Placing order for: " + username);
+        System.out.println("Cart items: " + cartItems.size());
+        for (CartItem item : cartItems) {
+            System.out.println(" - " + item.getDishName() + ": " + item.getQuantity());
+        }
+
+        if (cartItems == null || cartItems.isEmpty()) {
+            System.out.println("No items in cart. Order not placed.");
+            response.sendRedirect("cart"); 
+             return;
+        }
+
+        double total = cartItems.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
 
         int orderId = orderDAO.placeOrder(username, cartItems, total, voucherCode, address, payment);
 
-        cartDAO.clearCart(username); // sau khi đặt đơn thì xóa giỏ
+        cartDAO.clearCart(username);
 
         response.sendRedirect("orderConfirmation?orderId=" + orderId);
     }
+
 }
 

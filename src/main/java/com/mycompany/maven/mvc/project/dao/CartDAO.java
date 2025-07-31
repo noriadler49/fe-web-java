@@ -13,26 +13,26 @@ import java.util.List;
 public class CartDAO {
     public List<CartItem> getCartItemsByUsername(String username) {
         List<CartItem> cartItems = new ArrayList<>();
-        try (Connection conn = DBContext.getConnection()) {
-            String sql = """
-            SELECT c.CartItemId, c.CartItemQuantity, d.DishId, d.DishName, d.DishPrice
+        String sql = """
+            SELECT c.CartItemId, c.DishId, d.DishName, d.DishPrice, c.CartItemQuantity
             FROM tbl_CartItems c
+            JOIN tbl_Accounts a ON c.AccountId = a.AccountId
             JOIN tbl_Dishes d ON c.DishId = d.DishId
-            JOIN tbl_Accounts a ON a.AccountId = c.AccountId
             WHERE a.AccountUsername = ?
-            """;
+        """;
 
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, username);
-            ResultSet rs = ps.executeQuery();
+        try (Connection conn = DBContext.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 CartItem item = new CartItem();
                 item.setCartItemId(rs.getInt("CartItemId"));
+                item.setDishId(rs.getInt("DishId"));
                 item.setQuantity(rs.getInt("CartItemQuantity"));
-                item.setPrice(rs.getDouble("DishPrice")); // use DishPrice as item price
 
-                // Set Dish object
                 Dish dish = new Dish();
                 dish.setDishId(rs.getInt("DishId"));
                 dish.setDishName(rs.getString("DishName"));
@@ -45,8 +45,10 @@ public class CartDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return cartItems;
     }
+
 
     public void clearCart(String username) {
         try (Connection conn = DBContext.getConnection()) {

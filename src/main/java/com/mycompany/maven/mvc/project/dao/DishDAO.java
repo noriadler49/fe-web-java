@@ -116,6 +116,7 @@ public class DishDAO {
     }
     return null;
     }
+
     private List<Ingredient> getIngredientsByDishId(int dishId) {
     List<Ingredient> list = new ArrayList<>();
     String sql = "SELECT i.IngredientId, i.IngredientName " +
@@ -132,7 +133,7 @@ public class DishDAO {
         while (rs.next()) {
             Ingredient ing = new Ingredient();
             ing.setIngredientId(rs.getInt("IngredientId"));
-            ing.setIngredientName(rs.getString("IngredientName")); // ✅ CHỖ NÀY
+            ing.setIngredientName(rs.getString("IngredientName"));
             list.add(ing);
         }
 
@@ -141,8 +142,82 @@ public class DishDAO {
     }
 
     return list;
+    }
+
+    // Lấy tên tất cả categories
+    public List<String> getAllCategoryNames() {
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT CategoryName FROM tbl_Categories ORDER BY CategoryName";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("CategoryName"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    // Insert dish với categoryName
+    public boolean addDish(Dish dish) {
+        String sql = """
+            INSERT INTO tbl_Dishes (DishName, DishImageUrl, DishDescription, DishPrice, CategoryId, DishCreatedAt, DishUpdatedAt)
+            VALUES (?, ?, ?, ?, (SELECT CategoryId FROM tbl_Categories WHERE CategoryName = ?), GETDATE(), GETDATE())
+            """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, dish.getDishName());
+            ps.setString(2, dish.getDishImageUrl());
+            ps.setString(3, dish.getDishDescription());
+            ps.setDouble(4, dish.getDishPrice());
+            ps.setString(5, dish.getCategoryName());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Update dish cùng categoryName
+    public boolean updateDish(Dish dish) {
+        String sql = """
+            UPDATE tbl_Dishes
+            SET DishName = ?, DishImageUrl = ?, DishDescription = ?, DishPrice = ?,
+                CategoryId = (SELECT CategoryId FROM tbl_Categories WHERE CategoryName = ?),
+                DishUpdatedAt = GETDATE()
+            WHERE DishId = ?
+            """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, dish.getDishName());
+            ps.setString(2, dish.getDishImageUrl());
+            ps.setString(3, dish.getDishDescription());
+            ps.setDouble(4, dish.getDishPrice());
+            ps.setString(5, dish.getCategoryName());
+            ps.setInt(6, dish.getDishId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Delete dish
+    public boolean deleteDish(int dishId) {
+        String sql = "DELETE FROM tbl_Dishes WHERE DishId = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, dishId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
 
-
-
-}

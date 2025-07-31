@@ -120,7 +120,7 @@
                     <div class="card-body">
                         <h5 class="card-title">${dish.dishName}</h5>
                         <p class="card-text">${dish.dishDescription}</p>
-                        <p class="card-text fw-bold">$${dish.dishPrice}</p>
+                        <p class="card-text fw-bold">${dish.dishPrice}VND</p>
                     </div>
                 </div>
             </div>

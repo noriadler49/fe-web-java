@@ -7,7 +7,6 @@ import com.mycompany.maven.mvc.project.model.OrderItem;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -35,7 +34,6 @@ public class OrderConfirmationServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Order not found");
             return;
         }
-
         request.setAttribute("order", order);
         request.setAttribute("items", items);
         request.getRequestDispatcher("jsp/order/orderConfirmation.jsp").forward(request, response);

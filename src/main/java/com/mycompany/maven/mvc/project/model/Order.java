@@ -1,6 +1,5 @@
 package com.mycompany.maven.mvc.project.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class Order {
@@ -9,19 +8,17 @@ public class Order {
     private int accountId;
     private String status;
     private String voucherCode;
-    private LocalDateTime createdAt;
     private List<OrderItem> orderItems;
 
     public Order() {}
 
     public Order(int orderId, double totalPrice, int accountId, String status,
-                 String voucherCode, LocalDateTime createdAt, List<OrderItem> orderItems) {
+                 String voucherCode, List<OrderItem> orderItems) {
         this.orderId = orderId;
         this.totalPrice = totalPrice;
         this.accountId = accountId;
         this.status = status;
         this.voucherCode = voucherCode;
-        this.createdAt = createdAt;
         this.orderItems = orderItems;
     }
 
@@ -39,9 +36,6 @@ public class Order {
 
     public String getVoucherCode() { return voucherCode; }
     public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }

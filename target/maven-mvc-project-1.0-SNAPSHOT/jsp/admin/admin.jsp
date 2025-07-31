@@ -28,7 +28,12 @@
         }
         .content {
             flex-grow: 1;
-            padding: 30px;
+            height: 100vh;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
     </style>
 </head>
@@ -36,16 +41,15 @@
 
 <div class="sidebar">
     <h4 class="text-white text-center mb-4">Admin Panel</h4>
-    <a href="<%=contextPath%>/jsp/admin/admin_dish.jsp">Manage Dishes</a>
-    <a href="<%=contextPath%>/jsp/admin/admin_order.jsp">Manage Orders</a>
-    <a href="<%=contextPath%>/jsp/admin/admin_ingredient.jsp">Manage Ingredients</a>
-    <a href="<%=contextPath%>/jsp/admin/admin_account.jsp">Manage Accounts</a>
+    <a href="<%=contextPath%>/admin/dishes" target="adminFrame">Manage Dishes</a>
+    <a href="<%=contextPath%>/admin/orders" target="adminFrame">Manage Orders</a>
+    <a href="<%=contextPath%>/admin/ingredients" target="adminFrame">Manage Ingredients</a>
+    <a href="<%=contextPath%>/admin/accounts" target="adminFrame">Manage Accounts</a>
     <a href="<%=contextPath%>/logout" class="text-danger">Logout</a>
 </div>
 
 <div class="content">
-    <h2>Welcome, Admin!</h2>
-    <p>Use the sidebar to manage the system.</p>
+    <iframe name="adminFrame" src="" title="Admin Content"></iframe>
 </div>
 
 </body>

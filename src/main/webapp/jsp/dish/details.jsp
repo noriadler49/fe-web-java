@@ -37,7 +37,7 @@
         }
 
         .ingredients-list, .dish-description {
-            border: 2px solid #b30000;
+            border: 2px solid;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -46,7 +46,7 @@
         .dish-price {
             font-size: 20px;
             font-weight: bold;
-            color: #b30000;
+            color: #000000;
             margin-bottom: 20px;
         }
 

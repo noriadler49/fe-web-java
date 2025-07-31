@@ -30,10 +30,7 @@ public class OrderDAO {
                 order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
                 order.setStatus(rs.getString("OrderStatus"));
                 order.setVoucherCode(rs.getString("VoucherCode"));
-                Timestamp created = rs.getTimestamp("OrderCreatedAt");
-                if (created != null) {
-                    order.setCreatedAt(created.toLocalDateTime());
-                }
+                order.setAccountId(rs.getInt("AccountId"));
                 orders.add(order);
             }
         } catch (Exception e) {
@@ -62,9 +59,9 @@ public class OrderDAO {
 
                 // 2. Insert into tbl_Orders
                 String insertOrderSql = """
-                    INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderAddress, PaymentMethod, OrderCreatedAt)
+                    INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderAddress, PaymentMethod)
                     OUTPUT INSERTED.OrderId
-                    VALUES (?, ?, ?, ?, ?, ?, GETDATE())
+                    VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
                 stmtOrder = conn.prepareStatement(insertOrderSql);
@@ -72,7 +69,6 @@ public class OrderDAO {
                 stmtOrder.setInt(2, accountId);
                 stmtOrder.setString(3, "Pending");
 
-                // 👇 xử lý voucherCode có thể null
                 if (voucherCode == null || voucherCode.trim().isEmpty()) {
                     stmtOrder.setNull(4, Types.VARCHAR);
                 } else {
@@ -137,8 +133,7 @@ public class OrderDAO {
                 order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
                 order.setStatus(rs.getString("OrderStatus"));
                 order.setVoucherCode(rs.getString("VoucherCode"));
-                Timestamp created = rs.getTimestamp("OrderCreatedAt");
-                if (created != null) order.setCreatedAt(created.toLocalDateTime());
+                order.setAccountId(rs.getInt("AccountId"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -147,17 +142,22 @@ public class OrderDAO {
     }
 
     public List<OrderItem> getOrderItemsByOrderId(int orderId) {
-        List<OrderItem> items = new ArrayList<>();
-        try (Connection conn = DBContext.getConnection()) {
-            String sql = """
-                SELECT oi.*, d.DishName FROM tbl_OrderItems oi
-                JOIN tbl_Dishes d ON oi.DishId = d.DishId
-                WHERE oi.OrderId = ?
-            """;
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, orderId);
-            ResultSet rs = ps.executeQuery();
+    List<OrderItem> items = new ArrayList<>();
 
+    String sql = """
+        SELECT oi.OrderItemId, oi.DishId, oi.OrderId,
+               oi.OrderItemQuantity, oi.OrderItemPrice,
+               d.DishName
+        FROM tbl_OrderItems oi
+        JOIN tbl_Dishes d ON oi.DishId = d.DishId
+        WHERE oi.OrderId = ?
+    """;
+
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, orderId);
+        try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 OrderItem item = new OrderItem();
                 item.setOrderItemId(rs.getInt("OrderItemId"));
@@ -166,12 +166,46 @@ public class OrderDAO {
                 item.setQuantity(rs.getInt("OrderItemQuantity"));
                 item.setPrice(rs.getDouble("OrderItemPrice"));
                 item.setDishName(rs.getString("DishName"));
+
                 items.add(item);
             }
+        }
 
+    } catch (Exception e) {
+        e.printStackTrace(); // Có thể thay bằng log nếu muốn
+    }
+
+    return items;
+}
+
+
+    public List<Order> getAllOrders(String status) {
+        List<Order> orders = new ArrayList<>();
+        try (Connection conn = DBContext.getConnection()) {
+            String sql = """
+                SELECT o.*, a.AccountUsername FROM tbl_Orders o
+                JOIN tbl_Accounts a ON o.AccountId = a.AccountId
+            """;
+            if (!"All".equalsIgnoreCase(status)) {
+                sql += " WHERE o.OrderStatus = ?";
+            }
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            if (!"All".equalsIgnoreCase(status)) ps.setString(1, status);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Order order = new Order();
+                order.setOrderId(rs.getInt("OrderId"));
+                order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
+                order.setStatus(rs.getString("OrderStatus"));
+                order.setVoucherCode(rs.getString("VoucherCode"));
+                order.setAccountId(rs.getInt("AccountId"));
+                orders.add(order);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return items;
+        return orders;
     }
 }

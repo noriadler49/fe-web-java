@@ -58,7 +58,6 @@
                 <th>Total</th>
                 <th>Status</th>
                 <th>Voucher</th>
-                <th>Created</th>
             </tr>
             </thead>
             <tbody>
@@ -68,7 +67,6 @@
                     <td>$${order.totalPrice}</td>
                     <td>${order.status}</td>
                     <td>${order.voucherCode}</td>
-                    <td>${order.createdAt}</td>
                 </tr>
             </c:forEach>
             </tbody>
