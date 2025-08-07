@@ -36,7 +36,10 @@ public class CartItem {
     public String getDishName() { return dishName; }
     public void setDishName(String dishName) { this.dishName = dishName; }
 
-    public double getPrice() { return price; }
+    public double getPrice() {
+    return this.price != 0 ? this.price : this.dish.getDishPrice();
+}
+
     public void setPrice(double price) { this.price = price; }
 
     public Dish getDish() { return dish; }

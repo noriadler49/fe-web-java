@@ -149,7 +149,7 @@
                                     <a href="<%= contextPath %>/menu?category=All" class="btn btn-primary btn-lg">
                                         <i class="fas fa-shopping-cart"></i> Continue Shopping
                                     </a>
-                                    <a href="<%= contextPath %>/orders" class="btn btn-outline-secondary btn-lg ms-2">
+                                    <a href="<%= contextPath %>/myOrders" class="btn btn-outline-secondary btn-lg ms-2">
                                         <i class="fas fa-list"></i> View All Orders
                                     </a>
                                 </div>

@@ -25,7 +25,7 @@ public class OrderConfirmationServlet extends HttpServlet {
             return;
         }
 
-        int orderId = Integer.parseInt(orderIdParam);
+        String orderId = orderIdParam;
 
         Order order = orderDAO.getOrderByIdAndUsername(orderId, username);
         List<OrderItem> items = orderDAO.getOrderItemsByOrderId(orderId);

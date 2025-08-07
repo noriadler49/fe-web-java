@@ -30,7 +30,10 @@ public class CheckoutServlet extends HttpServlet {
 
         // Lấy giỏ hàng của user
         List<CartItem> cartItems = cartDAO.getCartItemsByUsername(username);
-        double total = cartItems.stream().mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
+      double total = cartItems.stream()
+    .mapToDouble(item -> item.getDish().getDishPrice() * item.getQuantity())
+    .sum();
+
 
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("totalPrice", total);
@@ -69,7 +72,7 @@ public class CheckoutServlet extends HttpServlet {
 
         double total = cartItems.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
 
-        int orderId = orderDAO.placeOrder(username, cartItems, total, voucherCode, address, payment);
+        String orderId = orderDAO.placeOrder(username, cartItems, total, voucherCode, address, payment);
 
         cartDAO.clearCart(username);
 

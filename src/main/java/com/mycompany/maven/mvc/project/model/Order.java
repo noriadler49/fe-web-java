@@ -3,16 +3,16 @@ package com.mycompany.maven.mvc.project.model;
 import java.util.List;
 
 public class Order {
-    private int orderId;
+    private String orderId;
     private double totalPrice;
-    private int accountId;
+    private String accountId;
     private String status;
     private String voucherCode;
     private List<OrderItem> orderItems;
 
     public Order() {}
 
-    public Order(int orderId, double totalPrice, int accountId, String status,
+    public Order(String orderId, double totalPrice, String accountId, String status,
                  String voucherCode, List<OrderItem> orderItems) {
         this.orderId = orderId;
         this.totalPrice = totalPrice;
@@ -22,14 +22,14 @@ public class Order {
         this.orderItems = orderItems;
     }
 
-    public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 
     public double getTotalPrice() { return totalPrice; }
     public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }
 
-    public int getAccountId() { return accountId; }
-    public void setAccountId(int accountId) { this.accountId = accountId; }
+    public String getAccountId() { return accountId; }
+    public void setAccountId(String accountId) { this.accountId = accountId; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

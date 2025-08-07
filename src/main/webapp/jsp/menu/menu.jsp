@@ -55,7 +55,6 @@
                         <h5 class="card-title">${item.dishName}</h5>
                         <p class="text-muted">Category: ${item.categoryName}</p>
                         <p class="card-text text-success fw-bold">${item.dishPrice} VND</p>
-                        <p class="text-muted small">Created: ${item.dishCreatedAt}</p>
 
                         <a href="<%=contextPath%>/dishDetails?id=${item.dishId}" class="btn btn-primary">View Dish</a>
 

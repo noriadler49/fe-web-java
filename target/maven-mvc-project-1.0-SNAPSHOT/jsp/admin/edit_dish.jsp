@@ -52,11 +52,10 @@
         <div class="col-md-2">
             <select name="categoryName" class="form-select" required>
                 <option value="" disabled ${dish.categoryName == null ? 'selected' : ''}>-- Category --</option>
-                <c:forEach var="c" items="${categories}">
-                    <option value="${c}"
-                        ${c == dish.categoryName ? 'selected' : ''}>${c}</option>
-                </c:forEach>
+                <option value="Food" ${dish.categoryName == 'Food' ? 'selected' : ''}>Food</option>
+                <option value="Drink" ${dish.categoryName == 'Drink' ? 'selected' : ''}>Drink</option>
             </select>
+
         </div>
         <div class="col-md-1">
             <button type="submit" class="btn btn-primary w-100">

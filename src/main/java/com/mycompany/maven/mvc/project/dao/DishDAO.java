@@ -1,223 +1,159 @@
 package com.mycompany.maven.mvc.project.dao;
 
+import com.mongodb.client.*;
+import com.mongodb.client.model.*;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import com.mycompany.maven.mvc.project.model.Dish;
 import com.mycompany.maven.mvc.project.model.Ingredient;
 import com.mycompany.maven.mvc.project.resources.DBContext;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class DishDAO {
 
+    private final MongoDatabase database = DBContext.getDatabase();
+    private final MongoCollection<Document> dishCol = database.getCollection("tbl_Dishes");
+    private final MongoCollection<Document> categoryCol = database.getCollection("tbl_Categories");
+    private final MongoCollection<Document> ingredientCol = database.getCollection("tbl_Ingredients");
+    private final MongoCollection<Document> dishIngredientCol = database.getCollection("tbl_DishIngredients");
+
     public List<Dish> getAllDishes(String category, String search) {
-        
-        List<Dish> dishes = new ArrayList<>();
-        String sql = "SELECT d.*, c.CategoryName FROM tbl_Dishes d JOIN tbl_Categories c ON d.CategoryId = c.CategoryId WHERE 1=1";
+        List<Bson> filters = new ArrayList<>();
 
         if (!"All".equalsIgnoreCase(category)) {
-            sql += " AND c.CategoryName = ?";
+            filters.add(Filters.eq("CategoryName", category));
         }
 
         if (search != null && !search.trim().isEmpty()) {
-            sql += " AND d.DishName LIKE ?";
+            filters.add(Filters.regex("DishName", Pattern.compile(search, Pattern.CASE_INSENSITIVE)));
         }
 
-        sql += " ORDER BY d.DishCreatedAt DESC";
+        Bson query = filters.isEmpty() ? new Document() : Filters.and(filters);
+        FindIterable<Document> docs = dishCol.find(query).sort(Sorts.descending("DishCreatedAt"));
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            int paramIndex = 1;
-            if (!"All".equalsIgnoreCase(category)) {
-                ps.setString(paramIndex++, category);
-            }
-
-            if (search != null && !search.trim().isEmpty()) {
-                ps.setString(paramIndex, "%" + search + "%");
-            }
-
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Dish dish = new Dish();
-                dish.setDishId(rs.getInt("DishId"));
-                dish.setDishName(rs.getString("DishName"));
-                dish.setDishImageUrl(rs.getString("DishImageUrl"));
-                dish.setDishDescription(rs.getString("DishDescription"));
-                dish.setDishPrice(rs.getDouble("DishPrice"));
-                dish.setCategoryName(rs.getString("CategoryName"));
-                dish.setDishCreatedAt(rs.getTimestamp("DishCreatedAt"));
-                dish.setDishUpdatedAt(rs.getTimestamp("DishUpdatedAt"));
-                dishes.add(dish);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<Dish> dishes = new ArrayList<>();
+        for (Document doc : docs) {
+            dishes.add(documentToDish(doc));
         }
 
         return dishes;
     }
 
     public List<Dish> getRandomDishes(int limit) {
-    List<Dish> dishes = new ArrayList<>();
-    String sql = "SELECT TOP (?) d.*, c.CategoryName " +
-                 "FROM tbl_Dishes d JOIN tbl_Categories c ON d.CategoryId = c.CategoryId " +
-                 "ORDER BY NEWID()";
+        List<Dish> dishes = new ArrayList<>();
+        AggregateIterable<Document> result = dishCol.aggregate(List.of(
+                Aggregates.sample(limit)
+        ));
 
-    try (Connection conn = DBContext.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-
-        ps.setInt(1, limit);
-        ResultSet rs = ps.executeQuery();
-
-        while (rs.next()) {
-            Dish dish = new Dish();
-            dish.setDishId(rs.getInt("DishId"));
-            dish.setDishName(rs.getString("DishName"));
-            dish.setDishImageUrl(rs.getString("DishImageUrl"));
-            dish.setDishDescription(rs.getString("DishDescription"));
-            dish.setDishPrice(rs.getDouble("DishPrice"));
-            dish.setCategoryName(rs.getString("CategoryName"));
-            dish.setDishCreatedAt(rs.getTimestamp("DishCreatedAt"));
-            dish.setDishUpdatedAt(rs.getTimestamp("DishUpdatedAt"));
-            dishes.add(dish);
+        for (Document doc : result) {
+            dishes.add(documentToDish(doc));
         }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return dishes;
     }
 
     public Dish getDishById(int dishId) {
-    String sql = "SELECT d.*, c.CategoryName FROM tbl_Dishes d JOIN tbl_Categories c ON d.CategoryId = c.CategoryId WHERE d.DishId = ?";
-    try (Connection conn = DBContext.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        Document doc = dishCol.find(Filters.eq("DishId", dishId)).first();
+        if (doc == null) return null;
 
-        ps.setInt(1, dishId);
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) {
-            Dish dish = new Dish();
-            dish.setDishId(rs.getInt("DishId"));
-            dish.setDishName(rs.getString("DishName"));
-            dish.setDishImageUrl(rs.getString("DishImageUrl"));
-            dish.setDishDescription(rs.getString("DishDescription"));
-            dish.setDishPrice(rs.getDouble("DishPrice"));
-            dish.setCategoryName(rs.getString("CategoryName"));
-            dish.setDishCreatedAt(rs.getTimestamp("DishCreatedAt"));
-            dish.setDishUpdatedAt(rs.getTimestamp("DishUpdatedAt"));
-            dish.setIngredients(getIngredientsByDishId(dishId));
-            return dish;
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-    return null;
+        Dish dish = documentToDish(doc);
+        dish.setIngredients(getIngredientsByDishId(dishId));
+        return dish;
     }
 
     private List<Ingredient> getIngredientsByDishId(int dishId) {
-    List<Ingredient> list = new ArrayList<>();
-    String sql = "SELECT i.IngredientId, i.IngredientName " +
-                 "FROM tbl_Ingredients i " +
-                 "JOIN tbl_DishIngredients di ON i.IngredientId = di.IngredientId " +
-                 "WHERE di.DishId = ?";
+        List<Ingredient> ingredients = new ArrayList<>();
 
-    try (Connection conn = DBContext.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        // Tìm tất cả IngredientId từ bảng DishIngredients
+        FindIterable<Document> dishIngDocs = dishIngredientCol.find(Filters.eq("DishId", dishId));
+        List<Integer> ingredientIds = new ArrayList<>();
+        for (Document doc : dishIngDocs) {
+            ingredientIds.add(doc.getInteger("IngredientId"));
+        }
 
-        ps.setInt(1, dishId);
-        ResultSet rs = ps.executeQuery();
-
-        while (rs.next()) {
+        // Lấy thông tin từ Ingredients collection
+        FindIterable<Document> ingDocs = ingredientCol.find(Filters.in("IngredientId", ingredientIds));
+        for (Document doc : ingDocs) {
             Ingredient ing = new Ingredient();
-            ing.setIngredientId(rs.getInt("IngredientId"));
-            ing.setIngredientName(rs.getString("IngredientName"));
-            list.add(ing);
+            ing.setIngredientId(doc.getInteger("IngredientId"));
+            ing.setIngredientName(doc.getString("IngredientName"));
+            ingredients.add(ing);
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        return ingredients;
     }
 
-    return list;
-    }
-
-    // Lấy tên tất cả categories
     public List<String> getAllCategoryNames() {
-        List<String> list = new ArrayList<>();
-        String sql = "SELECT CategoryName FROM tbl_Categories ORDER BY CategoryName";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(rs.getString("CategoryName"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<String> categories = new ArrayList<>();
+        FindIterable<Document> docs = categoryCol.find().sort(Sorts.ascending("CategoryName"));
+
+        for (Document doc : docs) {
+            categories.add(doc.getString("CategoryName"));
         }
-        return list;
+
+        return categories;
     }
-    
-    // Insert dish với categoryName
+
     public boolean addDish(Dish dish) {
-        String sql = """
-            INSERT INTO tbl_Dishes (DishName, DishImageUrl, DishDescription, DishPrice, CategoryId, DishCreatedAt, DishUpdatedAt)
-            VALUES (?, ?, ?, ?, (SELECT CategoryId FROM tbl_Categories WHERE CategoryName = ?), GETDATE(), GETDATE())
-            """;
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        // Auto-generate DishId (tăng tự động)
+        int newId = getNextDishId();
 
-            ps.setString(1, dish.getDishName());
-            ps.setString(2, dish.getDishImageUrl());
-            ps.setString(3, dish.getDishDescription());
-            ps.setDouble(4, dish.getDishPrice());
-            ps.setString(5, dish.getCategoryName());
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        Document doc = new Document("DishId", newId)
+                .append("DishName", dish.getDishName())
+                .append("DishImageUrl", dish.getDishImageUrl())
+                .append("DishDescription", dish.getDishDescription())
+                .append("DishPrice", dish.getDishPrice())
+                .append("CategoryName", dish.getCategoryName())
+                .append("DishCreatedAt", new Date())
+                .append("DishUpdatedAt", new Date());
+
+        dishCol.insertOne(doc);
+        return true;
     }
 
-    // Update dish cùng categoryName
     public boolean updateDish(Dish dish) {
-        String sql = """
-            UPDATE tbl_Dishes
-            SET DishName = ?, DishImageUrl = ?, DishDescription = ?, DishPrice = ?,
-                CategoryId = (SELECT CategoryId FROM tbl_Categories WHERE CategoryName = ?),
-                DishUpdatedAt = GETDATE()
-            WHERE DishId = ?
-            """;
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Bson filter = Filters.eq("DishId", dish.getDishId());
 
-            ps.setString(1, dish.getDishName());
-            ps.setString(2, dish.getDishImageUrl());
-            ps.setString(3, dish.getDishDescription());
-            ps.setDouble(4, dish.getDishPrice());
-            ps.setString(5, dish.getCategoryName());
-            ps.setInt(6, dish.getDishId());
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        Bson updates = Updates.combine(
+                Updates.set("DishName", dish.getDishName()),
+                Updates.set("DishImageUrl", dish.getDishImageUrl()),
+                Updates.set("DishDescription", dish.getDishDescription()),
+                Updates.set("DishPrice", dish.getDishPrice()),
+                Updates.set("CategoryName", dish.getCategoryName()),
+                Updates.set("DishUpdatedAt", new Date())
+        );
+
+        UpdateResult result = dishCol.updateOne(filter, updates);
+        return result.getModifiedCount() > 0;
     }
 
-    // Delete dish
     public boolean deleteDish(int dishId) {
-        String sql = "DELETE FROM tbl_Dishes WHERE DishId = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        DeleteResult result = dishCol.deleteOne(Filters.eq("DishId", dishId));
+        return result.getDeletedCount() > 0;
+    }
 
-            ps.setInt(1, dishId);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+    private Dish documentToDish(Document doc) {
+        Dish dish = new Dish();
+        dish.setDishId(doc.getInteger("DishId"));
+        dish.setDishName(doc.getString("DishName"));
+        dish.setDishImageUrl(doc.getString("DishImageUrl"));
+        dish.setDishDescription(doc.getString("DishDescription"));
+        dish.setDishPrice(doc.getDouble("DishPrice"));
+        dish.setCategoryName(doc.getString("CategoryName"));
+        return dish;
+    }
+
+    private int getNextDishId() {
+        // Lấy DishId lớn nhất, tăng lên 1
+        Document doc = dishCol.find()
+                .sort(Sorts.descending("DishId"))
+                .limit(1)
+                .first();
+
+        return doc == null ? 1 : doc.getInteger("DishId") + 1;
     }
 }
-

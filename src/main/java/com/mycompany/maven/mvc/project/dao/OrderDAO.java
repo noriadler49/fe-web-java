@@ -1,211 +1,165 @@
 package com.mycompany.maven.mvc.project.dao;
 
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mycompany.maven.mvc.project.model.CartItem;
 import com.mycompany.maven.mvc.project.model.Order;
 import com.mycompany.maven.mvc.project.model.OrderItem;
 import com.mycompany.maven.mvc.project.resources.DBContext;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.client.model.Filters.*;
+
 public class OrderDAO {
+
+    private final MongoDatabase database;
+
+    public OrderDAO() {
+        this.database = DBContext.getDatabase();
+    }
 
     public List<Order> getOrdersByUsernameAndStatus(String username, String status) {
         List<Order> orders = new ArrayList<>();
-        try (Connection conn = DBContext.getConnection()) {
-            String sql = "SELECT * FROM tbl_Orders o JOIN tbl_Accounts a ON o.AccountId = a.AccountId WHERE a.AccountUsername = ?";
-            if (!"All".equalsIgnoreCase(status)) {
-                sql += " AND o.OrderStatus = ?";
-            }
 
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, username);
-            if (!"All".equalsIgnoreCase(status)) ps.setString(2, status);
+        MongoCollection<Document> ordersCol = database.getCollection("tbl_Orders");
+        MongoCollection<Document> accountsCol = database.getCollection("tbl_Accounts");
 
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Order order = new Order();
-                order.setOrderId(rs.getInt("OrderId"));
-                order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
-                order.setStatus(rs.getString("OrderStatus"));
-                order.setVoucherCode(rs.getString("VoucherCode"));
-                order.setAccountId(rs.getInt("AccountId"));
-                orders.add(order);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        Document account = accountsCol.find(eq("AccountUsername", username)).first();
+        if (account == null) return orders;
+
+        ObjectId accountId = account.getObjectId("_id");
+
+        var filter = eq("AccountId", accountId);
+        if (!"All".equalsIgnoreCase(status)) {
+            filter = and(filter, eq("OrderStatus", status));
         }
+
+        for (Document doc : ordersCol.find(filter)) {
+            Order order = new Order();
+            order.setOrderId(doc.getObjectId("_id").toHexString());
+            order.setTotalPrice(doc.getDouble("OrderTotalPrice"));
+            order.setStatus(doc.getString("OrderStatus"));
+            order.setVoucherCode(doc.getString("VoucherCode"));
+            order.setAccountId(accountId.toHexString());
+            orders.add(order);
+        }
+
         return orders;
     }
 
-    public int placeOrder(String username, List<CartItem> cartItems, double total, String voucherCode, String address, String payment) {
-        int orderId = -1;
-        Connection conn = null;
-        PreparedStatement stmtOrder = null;
-        PreparedStatement stmtItems = null;
+    public String placeOrder(String username, List<CartItem> cartItems, double total,
+                             String voucherCode, String address, String payment) {
+        MongoCollection<Document> accountsCol = database.getCollection("tbl_Accounts");
+        MongoCollection<Document> ordersCol = database.getCollection("tbl_Orders");
+        MongoCollection<Document> orderItemsCol = database.getCollection("tbl_OrderItems");
 
-        try {
-            conn = DBContext.getConnection();
-            conn.setAutoCommit(false); // Start transaction
+        Document account = accountsCol.find(eq("AccountUsername", username)).first();
+        if (account == null) return null;
 
-            // 1. Get AccountId
-            String getUserSql = "SELECT AccountId FROM tbl_Accounts WHERE AccountUsername = ?";
-            try (PreparedStatement getUserStmt = conn.prepareStatement(getUserSql)) {
-                getUserStmt.setString(1, username);
-                ResultSet userRs = getUserStmt.executeQuery();
-                if (!userRs.next()) return -1;
-                int accountId = userRs.getInt("AccountId");
+        ObjectId accountId = account.getObjectId("_id");
 
-                // 2. Insert into tbl_Orders
-                String insertOrderSql = """
-                    INSERT INTO tbl_Orders (OrderTotalPrice, AccountId, OrderStatus, VoucherCode, OrderAddress, PaymentMethod)
-                    OUTPUT INSERTED.OrderId
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """;
+        Document orderDoc = new Document("OrderTotalPrice", total)
+                .append("AccountId", accountId)
+                .append("OrderStatus", "Pending")
+                .append("VoucherCode", voucherCode)
+                .append("OrderAddress", address)
+                .append("PaymentMethod", payment);
 
-                stmtOrder = conn.prepareStatement(insertOrderSql);
-                stmtOrder.setDouble(1, total);
-                stmtOrder.setInt(2, accountId);
-                stmtOrder.setString(3, "Pending");
+        ordersCol.insertOne(orderDoc);
+        ObjectId orderId = orderDoc.getObjectId("_id");
 
-                if (voucherCode == null || voucherCode.trim().isEmpty()) {
-                    stmtOrder.setNull(4, Types.VARCHAR);
-                } else {
-                    stmtOrder.setString(4, voucherCode);
-                }
-
-                stmtOrder.setString(5, address);
-                stmtOrder.setString(6, payment);
-
-                ResultSet rsOrder = stmtOrder.executeQuery();
-                if (rsOrder.next()) {
-                    orderId = rsOrder.getInt("OrderId");
-                }
-
-                // 3. Insert order items
-                String insertItemSql = """
-                    INSERT INTO tbl_OrderItems (DishId, OrderItemQuantity, OrderItemPrice, OrderId)
-                    VALUES (?, ?, ?, ?)
-                """;
-                stmtItems = conn.prepareStatement(insertItemSql);
-
-                for (CartItem item : cartItems) {
-                    stmtItems.setInt(1, item.getDishId());
-                    stmtItems.setInt(2, item.getQuantity());
-                    stmtItems.setDouble(3, item.getPrice());
-                    stmtItems.setInt(4, orderId);
-                    stmtItems.addBatch();
-                }
-
-                stmtItems.executeBatch();
-                conn.commit(); // Commit transaction
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-        } finally {
-            try { if (stmtOrder != null) stmtOrder.close(); } catch (Exception e) {}
-            try { if (stmtItems != null) stmtItems.close(); } catch (Exception e) {}
-            try { if (conn != null) conn.setAutoCommit(true); conn.close(); } catch (Exception e) {}
+        List<Document> orderItems = new ArrayList<>();
+        for (CartItem item : cartItems) {
+            Document doc = new Document("OrderId", orderId)
+                    .append("DishId", new ObjectId())
+                    .append("Quantity", item.getQuantity())
+                    .append("Price", item.getDish().getDishPrice());
+            orderItems.add(doc);
         }
 
-        return orderId;
+        if (!orderItems.isEmpty()) {
+            orderItemsCol.insertMany(orderItems);
+        }
+
+        return orderId.toHexString();
     }
 
-    public Order getOrderByIdAndUsername(int orderId, String username) {
-        Order order = null;
-        try (Connection conn = DBContext.getConnection()) {
-            String sql = """
-                SELECT o.* FROM tbl_Orders o
-                JOIN tbl_Accounts a ON o.AccountId = a.AccountId
-                WHERE o.OrderId = ? AND a.AccountUsername = ?
-            """;
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, orderId);
-            ps.setString(2, username);
-            ResultSet rs = ps.executeQuery();
+    public Order getOrderByIdAndUsername(String orderId, String username) {
+        MongoCollection<Document> ordersCol = database.getCollection("tbl_Orders");
+        MongoCollection<Document> accountsCol = database.getCollection("tbl_Accounts");
 
-            if (rs.next()) {
-                order = new Order();
-                order.setOrderId(rs.getInt("OrderId"));
-                order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
-                order.setStatus(rs.getString("OrderStatus"));
-                order.setVoucherCode(rs.getString("VoucherCode"));
-                order.setAccountId(rs.getInt("AccountId"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Document account = accountsCol.find(eq("AccountUsername", username)).first();
+        if (account == null) return null;
+
+        ObjectId accId = account.getObjectId("_id");
+        Document orderDoc = ordersCol.find(and(
+                eq("_id", new ObjectId()),
+                eq("AccountId", accId)
+        )).first();
+
+        if (orderDoc == null) return null;
+
+        Order order = new Order();
+        order.setOrderId(orderDoc.getObjectId("_id").toHexString());
+        order.setTotalPrice(orderDoc.getDouble("OrderTotalPrice"));
+        order.setStatus(orderDoc.getString("OrderStatus"));
+        order.setVoucherCode(orderDoc.getString("VoucherCode"));
+        order.setAccountId(accId.toHexString());
+
         return order;
     }
 
-    public List<OrderItem> getOrderItemsByOrderId(int orderId) {
-    List<OrderItem> items = new ArrayList<>();
+    public List<OrderItem> getOrderItemsByOrderId(String orderId) {
+        List<OrderItem> items = new ArrayList<>();
 
-    String sql = """
-        SELECT oi.OrderItemId, oi.DishId, oi.OrderId,
-               oi.OrderItemQuantity, oi.OrderItemPrice,
-               d.DishName
-        FROM tbl_OrderItems oi
-        JOIN tbl_Dishes d ON oi.DishId = d.DishId
-        WHERE oi.OrderId = ?
-    """;
+        MongoCollection<Document> orderItemsCol = database.getCollection("tbl_OrderItems");
+        MongoCollection<Document> dishesCol = database.getCollection("tbl_Dishes");
 
-    try (Connection conn = DBContext.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ObjectId oid = new ObjectId(orderId);
 
-        ps.setInt(1, orderId);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                OrderItem item = new OrderItem();
-                item.setOrderItemId(rs.getInt("OrderItemId"));
-                item.setDishId(rs.getInt("DishId"));
-                item.setOrderId(rs.getInt("OrderId"));
-                item.setQuantity(rs.getInt("OrderItemQuantity"));
-                item.setPrice(rs.getDouble("OrderItemPrice"));
-                item.setDishName(rs.getString("DishName"));
+        for (Document doc : orderItemsCol.find(eq("OrderId", oid))) {
+            OrderItem item = new OrderItem();
+            item.setOrderItemId(doc.getObjectId("_id").toHexString());
+            item.setOrderItemId(orderId);
+            item.setDishId(doc.getObjectId("DishId").toHexString());
+            item.setQuantity(doc.getInteger("Quantity"));
+            item.setPrice(doc.getDouble("Price"));
 
-                items.add(item);
+            Document dishDoc = dishesCol.find(eq("_id", doc.getObjectId("DishId"))).first();
+            if (dishDoc != null) {
+                item.setDishName(dishDoc.getString("DishName"));
             }
+
+            items.add(item);
         }
 
-    } catch (Exception e) {
-        e.printStackTrace(); // Có thể thay bằng log nếu muốn
+        return items;
     }
-
-    return items;
-}
-
 
     public List<Order> getAllOrders(String status) {
         List<Order> orders = new ArrayList<>();
-        try (Connection conn = DBContext.getConnection()) {
-            String sql = """
-                SELECT o.*, a.AccountUsername FROM tbl_Orders o
-                JOIN tbl_Accounts a ON o.AccountId = a.AccountId
-            """;
-            if (!"All".equalsIgnoreCase(status)) {
-                sql += " WHERE o.OrderStatus = ?";
-            }
 
-            PreparedStatement ps = conn.prepareStatement(sql);
-            if (!"All".equalsIgnoreCase(status)) ps.setString(1, status);
-            ResultSet rs = ps.executeQuery();
+        MongoCollection<Document> ordersCol = database.getCollection("tbl_Orders");
 
-            while (rs.next()) {
-                Order order = new Order();
-                order.setOrderId(rs.getInt("OrderId"));
-                order.setTotalPrice(rs.getDouble("OrderTotalPrice"));
-                order.setStatus(rs.getString("OrderStatus"));
-                order.setVoucherCode(rs.getString("VoucherCode"));
-                order.setAccountId(rs.getInt("AccountId"));
-                orders.add(order);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        var filter = new Document();
+        if (!"All".equalsIgnoreCase(status)) {
+            filter.append("OrderStatus", status);
         }
+
+        for (Document doc : ordersCol.find(filter)) {
+            Order order = new Order();
+            order.setOrderId(doc.getObjectId("_id").toHexString());
+            order.setTotalPrice(doc.getDouble("OrderTotalPrice"));
+            order.setStatus(doc.getString("OrderStatus"));
+            order.setVoucherCode(doc.getString("VoucherCode"));
+            order.setAccountId(doc.getObjectId("AccountId").toHexString());
+            orders.add(order);
+        }
+
         return orders;
     }
 }

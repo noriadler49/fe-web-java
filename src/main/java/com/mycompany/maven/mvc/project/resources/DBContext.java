@@ -1,15 +1,17 @@
 package com.mycompany.maven.mvc.project.resources;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 public class DBContext {
-    public static Connection getConnection() throws Exception {
-        String url = "jdbc:sqlserver://localhost:1433;databaseName=dtb_lastTermPrj;encrypt=true;trustServerCertificate=true";
-        String user = "norial";
-        String password = "Alice30th@111205";
 
-        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        return DriverManager.getConnection(url, user, password);
+    private static final String uri = "mongodb://localhost:27017";
+    private static final String DATABASE_NAME = "dtb_lastTermPrj";
+
+    private static MongoClient mongoClient = MongoClients.create(uri);
+
+    public static MongoDatabase getDatabase() {
+        return mongoClient.getDatabase(DATABASE_NAME);
     }
 }

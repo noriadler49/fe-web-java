@@ -1,16 +1,16 @@
 package com.mycompany.maven.mvc.project.model;
 
 public class OrderItem {
-    private int orderItemId;
-    private int dishId;
+    private String orderItemId;
+    private String dishId;
     private String dishName;
     private int quantity;
     private double price;
-    private int orderId;
+    private String orderId;
 
     public OrderItem() {}
 
-    public OrderItem(int orderItemId, int dishId, int quantity, double price, int orderId) {
+    public OrderItem(String orderItemId, String dishId, int quantity, double price, String orderId) {
         this.orderItemId = orderItemId;
         this.dishId = dishId;
         this.quantity = quantity;
@@ -19,11 +19,11 @@ public class OrderItem {
     }
 
     // Getter & Setter
-    public int getOrderItemId() { return orderItemId; }
-    public void setOrderItemId(int orderItemId) { this.orderItemId = orderItemId; }
+    public String getOrderItemId() { return orderItemId; }
+    public void setOrderItemId(String orderItemId) { this.orderItemId = orderItemId; }
 
-    public int getDishId() { return dishId; }
-    public void setDishId(int dishId) { this.dishId = dishId; }
+    public String getDishId() { return dishId; }
+    public void setDishId(String dishId) { this.dishId = dishId; }
 
     public String getDishName() { return dishName; } 
     public void setDishName(String dishName) { this.dishName = dishName; }
@@ -33,10 +33,6 @@ public class OrderItem {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
-
     
     public void setOrderItemPrice(double price) { this.price = price; }
 
