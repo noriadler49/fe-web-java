@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page session="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <%
     String contextPath = request.getContextPath();
@@ -116,7 +117,16 @@
         <c:forEach var="dish" items="${featuredDishes}">
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="${dish.dishImageUrl}" class="card-img-top" alt="${dish.dishName}">
+                    <c:choose>
+    <c:when test="${fn:startsWith(dish.dishImageUrl, 'http')}">
+        <img src="${dish.dishImageUrl}" class="card-img-top" alt="${dish.dishName}">
+    </c:when>
+    <c:otherwise>
+        <img src="${pageContext.request.contextPath}/images/${dish.dishImageUrl}" class="card-img-top" alt="${dish.dishName}">
+    </c:otherwise>
+</c:choose>
+
+
                     <div class="card-body">
                         <h5 class="card-title">${dish.dishName}</h5>
                         <p class="card-text">${dish.dishDescription}</p>

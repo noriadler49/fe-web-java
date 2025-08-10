@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <%
     String contextPath = request.getContextPath();
@@ -69,8 +70,17 @@
     <!-- Left: Dish Image -->
     <div class="dish-image">
         <h2>${dish.dishName}</h2>
+        <c:choose>
+    <c:when test="${fn:startsWith(dish.dishImageUrl, 'http')}">
         <img src="${dish.dishImageUrl}" alt="Dish Image">
+    </c:when>
+    <c:otherwise>
+        <img src="${pageContext.request.contextPath}/images/${dish.dishImageUrl}" alt="Dish Image">
+    </c:otherwise>
+</c:choose>
+
     </div>
+
 
     <!-- Right: Info -->
     <div class="dish-info">

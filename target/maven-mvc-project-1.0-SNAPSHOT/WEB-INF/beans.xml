@@ -6,7 +6,7 @@
 </beans>
 <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
     <property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
-    <property name="url" value="jdbc:sqlserver://localhost:1433;databaseName=dtb_lastTermPrj;encrypt=true;trustServerCertificate=true" />
-    <property name="username" value="norial" />
-    <property name="password" value="Alice30th@111205" />
+    <property name="url" value="jdbc:sqlserver://localhost:1433;databaseName=Menu_data;encrypt=true;trustServerCertificate=true" />
+    <property name="username" value="sa" />
+    <property name="password" value="12345" />
 </bean>

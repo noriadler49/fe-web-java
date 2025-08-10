@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        TOMCAT_PATH = 'C:\Users\Norial\dev\apache-tomcat-11.0.7'
+        TOMCAT_PATH = 'D:\Ki3_CNTT\apache-tomcat-11.0.7'
     }
 
     stages {

@@ -1,14 +1,17 @@
 package com.mycompany.maven.mvc.project.controller;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.mycompany.maven.mvc.project.dao.AccountDAO;
 import com.mycompany.maven.mvc.project.model.Account;
 
-import jakarta.servlet.*;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
-
-import java.io.IOException;
-import java.util.List;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/admin/accounts")
 public class AdminAccountController extends HttpServlet {
@@ -33,7 +36,7 @@ public class AdminAccountController extends HttpServlet {
             dispatcher.forward(request, response);
         }
     }
-
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

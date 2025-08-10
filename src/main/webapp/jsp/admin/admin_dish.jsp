@@ -2,6 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.mycompany.maven.mvc.project.model.Dish" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%
     String contextPath = request.getContextPath();
     List<Dish> dishes = (List<Dish>) request.getAttribute("dishes");
@@ -45,9 +46,18 @@
                 <td>${d.dishId}</td>
                 <td>${d.dishName}</td>
                 <td>
-                    <c:if test="${not empty d.dishImageUrl}">
+                    <!-- <c:if test="${not empty d.dishImageUrl}">
                         <img src="${d.dishImageUrl}" class="thumb"/>
-                    </c:if>
+                    </c:if> -->
+                    <c:choose>
+                        <c:when test="${fn:startsWith(d.dishImageUrl, 'http')}">
+                            <img src="${d.dishImageUrl}" alt="Dish Image" class="thumb"/>
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/images/${d.dishImageUrl}" alt="Dish Image" class="thumb"/>
+                        </c:otherwise>
+                    </c:choose>
+
                 </td>
                 <td>${d.dishDescription}</td>
                 <td>${d.dishPrice}</td>

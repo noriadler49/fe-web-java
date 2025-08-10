@@ -1,13 +1,17 @@
 package com.mycompany.maven.mvc.project.dao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.mycompany.maven.mvc.project.model.CartItem;
 import com.mycompany.maven.mvc.project.model.Order;
 import com.mycompany.maven.mvc.project.model.OrderItem;
 import com.mycompany.maven.mvc.project.resources.DBContext;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class OrderDAO {
 
@@ -208,4 +212,17 @@ public class OrderDAO {
         }
         return orders;
     }
+    public boolean updateOrderStatus(int orderId, String status) {
+    String sql = "UPDATE tbl_Orders SET OrderStatus = ? WHERE OrderId = ?";
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, status);
+        ps.setInt(2, orderId);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
 }

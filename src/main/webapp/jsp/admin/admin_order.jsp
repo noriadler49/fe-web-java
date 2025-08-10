@@ -20,23 +20,35 @@
     </form>
 
     <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>User ID</th>
-                <th>Status</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-        <c:forEach var="order" items="${orders}">
-            <tr>
-                <td>${order.orderId}</td>
-                <td>${order.accountId}</td>
-                <td>${order.status}</td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>User ID</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Actions</th> <!-- new column -->
+        </tr>
+    </thead>
+    <tbody>
+    <c:forEach var="order" items="${orders}">
+        <tr>
+            <td>${order.orderId}</td>
+            <td>${order.accountId}</td>
+            <td>${order.status}</td>
+            <td>${order.totalPrice}</td>
+            <td>
+                <c:if test="${order.status == 'Pending'}">
+                    <form method="post" action="${pageContext.request.contextPath}/admin/orders" style="display:inline;">
+                        <input type="hidden" name="orderId" value="${order.orderId}" />
+                        <input type="hidden" name="action" value="confirm" />
+                        <button type="submit" class="btn btn-success btn-sm">Confirm</button>
+                    </form>
+                </c:if>
+            </td>
+        </tr>
+    </c:forEach>
+    </tbody>
+</table>
+
 </body>
 </html>

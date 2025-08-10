@@ -50,7 +50,15 @@
         <c:forEach var="item" items="${dishes}">
             <div class="col-md-4 mb-4">
                 <div class="card shadow-sm h-100 dish-card">
-                    <img src="${item.dishImageUrl}" class="card-img-top" alt="${item.dishName}">
+                    <c:choose>
+    <c:when test="${fn:startsWith(item.dishImageUrl, 'http')}">
+        <img src="${item.dishImageUrl}" class="card-img-top" alt="${item.dishName}">
+    </c:when>
+    <c:otherwise>
+        <img src="${pageContext.request.contextPath}/images/${item.dishImageUrl}" class="card-img-top" alt="${item.dishName}">
+    </c:otherwise>
+</c:choose>
+
                     <div class="card-body text-center">
                         <h5 class="card-title">${item.dishName}</h5>
                         <p class="text-muted">Category: ${item.categoryName}</p>
