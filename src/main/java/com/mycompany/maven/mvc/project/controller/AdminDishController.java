@@ -1,13 +1,19 @@
 package com.mycompany.maven.mvc.project.controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.mycompany.maven.mvc.project.dao.DishDAO;
 import com.mycompany.maven.mvc.project.model.Dish;
+import com.mycompany.maven.mvc.project.model.Ingredient;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
-import java.io.IOException;
-import java.util.List;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/admin/dishes")
 public class AdminDishController extends HttpServlet {
@@ -28,6 +34,7 @@ public class AdminDishController extends HttpServlet {
         } else if (action.equals("new")) {
         req.setAttribute("dish", new Dish());
         req.setAttribute("categories", dao.getAllCategoryNames());
+        req.setAttribute("ingredients", dao.getAllIngredients()); 
         RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin/edit_dish.jsp");
         rd.forward(req, resp);
         
@@ -36,14 +43,18 @@ public class AdminDishController extends HttpServlet {
         Dish d = dao.getDishById(id);
         req.setAttribute("dish", d);
         req.setAttribute("categories", dao.getAllCategoryNames());
-            RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin/edit_dish.jsp");
-            rd.forward(req, resp);
+        req.setAttribute("ingredients", dao.getAllIngredients());
+        RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin/edit_dish.jsp");
+        rd.forward(req, resp);
 
         } else if (action.equals("delete")) {
-            int id = Integer.parseInt(req.getParameter("dishId"));
-            dao.deleteDish(id);
-            resp.sendRedirect(req.getContextPath() + "/admin/dishes");
-        }
+    int id = Integer.parseInt(req.getParameter("dishId"));
+    boolean deleted = dao.deleteDish(id);  // gọi 1 lần duy nhất
+    System.out.println("Delete request for DishId: " + id);
+    System.out.println("Deleted result: " + deleted);
+    resp.sendRedirect(req.getContextPath() + "/admin/dishes");
+}
+
     }
 
     @Override
@@ -56,6 +67,17 @@ public class AdminDishController extends HttpServlet {
         String desc = req.getParameter("description");
         double price = Double.parseDouble(req.getParameter("price"));
         String catName = req.getParameter("categoryName");
+         
+        String[] ingIds = req.getParameterValues("ingredientIds");
+        List<Ingredient> ingredientList = new ArrayList<>();
+        if (ingIds != null) {
+            for (String ingId : ingIds) {
+                Ingredient ing = new Ingredient();
+                ing.setIngredientId(Integer.parseInt(ingId));
+                ingredientList.add(ing);
+            }
+        }
+
 
         if (action.equals("add")) {
             Dish d = new Dish();
@@ -64,6 +86,7 @@ public class AdminDishController extends HttpServlet {
             d.setDishDescription(desc);
             d.setDishPrice(price);
             d.setCategoryName(catName);
+            d.setIngredients(ingredientList);
             dao.addDish(d);
 
         } else if (action.equals("update")) {
@@ -75,6 +98,7 @@ public class AdminDishController extends HttpServlet {
             d.setDishDescription(desc);
             d.setDishPrice(price);
             d.setCategoryName(catName);
+            d.setIngredients(ingredientList);
             dao.updateDish(d);
         }
 

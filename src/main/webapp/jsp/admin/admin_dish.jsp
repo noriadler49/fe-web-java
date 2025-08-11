@@ -37,6 +37,7 @@
             <th>Description</th>
             <th>Price</th>
             <th>Category</th>
+            <th>Ingredients</th> 
             <th>Actions</th>
         </tr>
         </thead>
@@ -62,6 +63,12 @@
                 <td>${d.dishDescription}</td>
                 <td>${d.dishPrice}</td>
                 <td>${d.categoryName}</td>
+                <td>
+            <c:forEach var="ing" items="${d.ingredients}" varStatus="loop">
+                ${ing.ingredientName}<c:if test="${!loop.last}">, </c:if>
+            </c:forEach>
+        </td>
+        
                 <td class="actions">
                     <!-- Edit -->
                     <a href="<%=contextPath%>/admin/dishes?action=edit&dishId=${d.dishId}"
@@ -80,6 +87,7 @@
         </tbody>
     </table>
 </div>
-<script src="${contextPath}/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

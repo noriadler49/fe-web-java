@@ -44,7 +44,7 @@
                        class="btn btn-sm btn-warning">Edit</a>
 
                     <!-- Delete -->
-                    <form action="<%=contextPath%>/admin/ingredients" method="get"
+                    <form action="<%= contextPath %>/admin/ingredients" method="get"
                           onsubmit="return confirm('Delete this ingredient?');">
                         <input type="hidden" name="action" value="delete"/>
                         <input type="hidden" name="ingredientId" value="${ing.ingredientId}"/>

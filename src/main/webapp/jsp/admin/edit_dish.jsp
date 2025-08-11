@@ -23,11 +23,8 @@
     </h2>
 
     <form action="<%= contextPath %>/admin/dishes" method="post" class="row g-2">
-        <!-- action: add if new, update otherwise -->
         <input type="hidden" name="action"
                value="${dish.dishId == 0 ? 'add' : 'update'}"/>
-
-        <!-- only include dishId when updating -->
         <c:if test="${dish.dishId != 0}">
             <input type="hidden" name="dishId" value="${dish.dishId}"/>
         </c:if>
@@ -58,19 +55,60 @@
                 </c:forEach>
             </select>
         </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-primary w-100">
-                <c:choose>
-                    <c:when test="${dish.dishId == 0}">Create</c:when>
-                    <c:otherwise>Save Changes</c:otherwise>
-                </c:choose>
-            </button>
-        </div>
+
+        <!-- INGREDIENTS: search + native multi-select (shows max 5 rows before scroll) -->
+        <!-- Ingredient selector full width -->
+<div class="col-12 col-md-6">
+    <label for="ingredientSearch" class="form-label">Ingredients</label>
+    <input id="ingredientSearch" class="form-control mb-2" placeholder="Search ingredients...">
+
+    <select name="ingredientIds" id="ingredientSelect" class="form-select" multiple size="5">
+        <c:forEach var="ing" items="${ingredients}">
+            <option value="${ing.ingredientId}"
+                <c:if test="${not empty dish.ingredients}">
+                    <c:forEach var="sel" items="${dish.ingredients}">
+                        <c:if test="${sel.ingredientId == ing.ingredientId}">selected</c:if>
+                    </c:forEach>
+                </c:if>
+            >${ing.ingredientName}</option>
+        </c:forEach>
+    </select>
+    <div class="form-text">Hold Ctrl/Cmd or Shift to select multiple, or use the search above to filter.</div>
+</div>
+
+<!-- Submit button row -->
+<div class="col-12 mt-3">
+    <button type="submit" class="btn btn-primary">
+        <c:choose>
+            <c:when test="${dish.dishId == 0}">Create</c:when>
+            <c:otherwise>Save Changes</c:otherwise>
+        </c:choose>
+    </button>
+</div>
+
     </form>
 
     <a href="<%= contextPath %>/admin/dishes"
        class="btn btn-secondary mt-3">← Back to List</a>
 </div>
+
 <script src="<%= contextPath %>/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const search = document.getElementById('ingredientSearch');
+  const select = document.getElementById('ingredientSelect');
+
+  // simple filter: hide options whose text doesn't include query
+  search.addEventListener('input', function(){
+    const q = this.value.trim().toLowerCase();
+    for (let i = 0; i < select.options.length; i++) {
+      const opt = select.options[i];
+      opt.hidden = q && !opt.text.toLowerCase().includes(q);
+    }
+  });
+});
+</script>
+
 </body>
-</html>
+</html> 

@@ -24,24 +24,52 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+                String username = request.getParameter("username");
+            String password = request.getParameter("password");
 
-        Account acc = dao.getAccountByUsernameAndPassword(username, password);
-
-        if (acc != null) {
-            request.getSession().setAttribute("username", acc.getAccountUsername());
-            request.getSession().setAttribute("role", acc.getAccountRole());
-
-            if ("Staff".equalsIgnoreCase(acc.getAccountRole())) {
-                response.sendRedirect("jsp/admin/admin.jsp"); // Redirect admin
-            } else {
-                response.sendRedirect("home"); // Redirect user
+            // Basic null/empty check
+            if (username == null || password == null ||
+                username.trim().isEmpty() || password.trim().isEmpty()) {
+                request.setAttribute("error", "Username and password cannot be empty.");
+                request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+                return;
             }
-        } else {
-            request.setAttribute("error", "Invalid login.");
-            request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
-        }
+
+            username = username.trim();
+            password = password.trim();
+
+            // Server-side regex validation
+            if (!username.matches("^(?=.*[A-Z]).{8,}$")) {
+                request.setAttribute("error", "Username must be at least 8 characters and include at least one uppercase letter.");
+                request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+                return;
+            }
+
+            if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$")) {
+                request.setAttribute("error", "Password must be at least 8 characters long and include both letters and numbers.");
+                request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+                return;
+            }
+
+            // Proceed with authentication
+            Account acc = dao.getAccountByUsernameAndPassword(username, password);
+
+            if (acc != null) {
+                request.getSession().setAttribute("username", acc.getAccountUsername());
+                request.getSession().setAttribute("role", acc.getAccountRole());
+
+                if ("Staff".equalsIgnoreCase(acc.getAccountRole())) {
+                    response.sendRedirect("jsp/admin/admin.jsp");
+                } else {
+                    response.sendRedirect("home");
+                }
+            } else {
+                request.setAttribute("error", "Invalid username or password.");
+                request.setAttribute("username", username);
+                request.getRequestDispatcher("/jsp/account/login.jsp").forward(request, response);
+            }
+
+
     }
 
 }

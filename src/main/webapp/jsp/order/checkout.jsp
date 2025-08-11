@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
     String contextPath = request.getContextPath();
+    Integer totalUsers = (Integer) request.getAttribute("totalUsers");
 %>
 <!DOCTYPE html>
 <html>
@@ -15,7 +16,7 @@
     <form action="<%=contextPath%>/checkout" method="post">
         <div class="mb-3">
             <label>Name</label>
-            <input type="text" name="name" required class="form-control"/>
+            <input type="text" name="name" required class="form-control" value="<c:out value='${sessionScope.username}'/>"/>
         </div>
         <div class="mb-3">
             <label>Address</label>
@@ -24,8 +25,8 @@
         <div class="mb-3">
             <label>Payment Method</label>
             <select name="payment" class="form-control">
-                <option value="COD">Cash on Delivery</option>
-                <option value="Card">Credit Card</option>
+                <option value="Cash">Cash on Delivery</option>
+                <option value="VnPay">Credit Card/VnPay</option>
             </select>
         </div>
         <div class="mb-3">

@@ -27,19 +27,24 @@
             text-align: center;
         }
 
-        .cart-table tbody tr {
+        /* .cart-table tbody tr {
             transition: all 0.3s ease-in-out;
-        }
-
-        .cart-table tbody tr:hover {
-            background-color: #ffe6e6;
-        }
+        } */
 
         .cart-table th,
         .cart-table td {
             text-align: center;
             vertical-align: middle;
         }
+        .cart-table tbody tr {
+            transition: all 0.3s ease-in-out;
+    background-color: #dadada; /* màu xám nhạt */
+}
+
+.cart-table tbody tr:hover {
+    background-color: #c5c5c5; /* màu xám đậm hơn khi hover */
+}
+
     </style>
 </head>
 <body>
@@ -51,27 +56,37 @@
     </c:if>
 
     <c:if test="${not empty orders}">
-        <table class="table cart-table">
-            <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Voucher</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach var="order" items="${orders}">
+        <!-- Khung chứa bảng với scroll -->
+        <div style="max-height: 700px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
+            <table class="table cart-table mb-0">
+                <thead>
                 <tr>
-                    <td>${order.orderId}</td>
-                    <td>$${order.totalPrice}</td>
-                    <td>${order.status}</td>
-                    <td>${order.voucherCode}</td>
+                    <th>Order ID</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Voucher</th>
                 </tr>
-            </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <c:forEach var="order" items="${orders}">
+                    <tr>
+                        <td>${order.orderId}</td>
+                        <td>$${order.totalPrice}</td>
+                        <td>${order.status}</td>
+                        <td>${order.voucherCode}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="<%=contextPath%>/home" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
     </c:if>
 </div>
+
 </body>
 </html>

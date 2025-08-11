@@ -34,10 +34,16 @@
     <h2 class="text-center text-danger">Login</h2>
     <form action="<%=contextPath%>/login" method="post">
         <div class="mb-3">
-            <input name="username" class="form-control" placeholder="Username" required>
+            <input name="username" class="form-control" placeholder="Username" required
+       pattern="(?=.*[A-Z]).{8,}"
+       title="Username must be at least 8 characters and contain at least one uppercase letter."
+       value="${param.username != null ? param.username : ''}">
+       
         </div>
         <div class="mb-3">
-            <input name="password" type="password" class="form-control" placeholder="Password" required>
+            <input name="password" type="password" class="form-control" placeholder="Password" required
+       pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+       title="Password must be at least 8 characters long and contain both letters and numbers.">
         </div>
         <div class="d-grid">
             <button type="submit" class="btn btn-danger">Login</button>

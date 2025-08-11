@@ -97,10 +97,13 @@ public class OrderDAO {
                 for (CartItem item : cartItems) {
                     stmtItems.setInt(1, item.getDishId());
                     stmtItems.setInt(2, item.getQuantity());
-                    stmtItems.setDouble(3, item.getPrice());
+                    stmtItems.setDouble(3, item.getDish().getDishPrice());
+
                     stmtItems.setInt(4, orderId);
                     stmtItems.addBatch();
                 }
+                System.out.println("Account ID: " + accountId);
+System.out.println("New Order ID: " + orderId);
 
                 stmtItems.executeBatch();
                 conn.commit(); // Commit transaction

@@ -24,7 +24,7 @@
     }
 
     .dish-card img {
-        height: 250px;
+        height: 235px;
         object-fit: cover;
     }
 
@@ -135,6 +135,12 @@
                 </div>
             </div>
         </c:forEach>
+    </div>
+ <!-- Nút Menu -->
+    <div class="text-center mt-3">
+        <a href="<%=contextPath%>/menu?category=All" class="btn btn-primary btn-lg">
+            <i class="fas fa-utensils"></i> View Full Menu
+        </a>
     </div>
 
     <div class="text-center mt-5">

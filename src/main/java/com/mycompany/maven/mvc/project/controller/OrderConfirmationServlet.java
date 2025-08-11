@@ -1,14 +1,17 @@
 package com.mycompany.maven.mvc.project.controller;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.mycompany.maven.mvc.project.dao.OrderDAO;
 import com.mycompany.maven.mvc.project.model.Order;
 import com.mycompany.maven.mvc.project.model.OrderItem;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
-import java.io.IOException;
-import java.util.List;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet(name = "OrderConfirmationServlet", urlPatterns = "/orderConfirmation")
 public class OrderConfirmationServlet extends HttpServlet {

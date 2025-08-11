@@ -36,6 +36,9 @@
 
         <a href="${pageContext.request.contextPath}/menu?category=Drink&search=${searchString}"
            class="btn ${selectedCategory eq 'Drink' ? 'btn-danger' : 'btn-outline-danger'}">Drink</a>
+
+           <a href="${pageContext.request.contextPath}/menu?category=Desserts&search=${searchString}"
+           class="btn ${selectedCategory eq 'Desserts' ? 'btn-danger' : 'btn-outline-danger'}">Dessert</a>
     </div>
 
     <!-- Search Form -->
